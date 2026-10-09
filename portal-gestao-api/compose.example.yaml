@@ -1,0 +1,22 @@
+﻿services:
+  portal-gestao-api:
+    image: portal-gestao-api
+    build:
+      context: .
+      dockerfile: portal-gestao-api/Dockerfile
+      
+  database:
+    image: mcr.microsoft.com/mssqlserver:2022-latest
+    container_name: database
+    restart: unless-stopped
+    ports: 
+      - "1433:1433"
+    environment:
+      - ACCEPT_EULA=Y
+      - MSSQL_SA_PASSWORD=SUA_SENHA
+      - MSSQL_PID=Developer
+    volumes:
+      - mssql-data:/var/opt/mssql
+
+volumes:
+  mssql-data:
