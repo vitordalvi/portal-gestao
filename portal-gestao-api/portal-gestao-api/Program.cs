@@ -8,19 +8,24 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddOpenApi();
 
-// Configurando Entity Framework Core (SQL Server)
-// String de conexão mockada pra usar com o Docker Compose do case (mssqlserver:2022-latest)
-var connectionString = "Server=localhost,1433;Database=PortalGestaoDb;User Id=sa;Password=123456;TrustServerCertificate=True;";
+builder.Services.AddCors(options =>
+{
+    options.AddDefaultPolicy(policy =>
+    {
+        policy.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    });
+});
+
+var connectionString = "Server=localhost,1433;Database=PortalGestaoDb;User Id=sa;Password=PortalGestao@2024;TrustServerCertificate=True;";
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
 var app = builder.Build();
 
-// Garantir que o banco de dados e as tabelas sejam criadas automaticamente na inicialização
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    context.Database.EnsureCreated(); // Cria o banco baseado no Model e insere o Seed Data
+    context.Database.EnsureCreated();
 }
 
 if (app.Environment.IsDevelopment())
@@ -28,6 +33,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.UseCors();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
