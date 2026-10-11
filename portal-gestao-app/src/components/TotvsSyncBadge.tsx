@@ -87,22 +87,24 @@ export const TotvsSyncBadge: React.FC<TotvsSyncBadgeProps> = ({
             border: 'none',
             color: 'var(--accent-light)',
             cursor: isSyncing ? 'not-allowed' : 'pointer',
-            padding: '2px 4px',
-            display: 'flex',
+            padding: '2px 6px',
+            display: 'inline-flex',
             alignItems: 'center',
-            gap: '0.25rem',
+            justifyContent: 'center',
+            minWidth: '88px',
+            gap: '0.35rem',
             fontSize: '0.75rem',
             fontWeight: 500,
             borderRadius: '4px',
             transition: 'all 0.2s ease',
-            opacity: isSyncing ? 0.6 : 1,
+            opacity: isSyncing ? 0.75 : 1,
           }}
           title="Sincronizar agora com o ERP TOTVS"
         >
           <RefreshCw 
             size={12} 
             style={{ 
-              animation: isSyncing ? 'spin 1s linear infinite' : 'none',
+              animation: isSyncing ? 'spin 0.8s linear infinite' : 'none',
               transformOrigin: 'center center'
             }} 
           />

@@ -41,8 +41,15 @@ export const DashboardPage: React.FC = () => {
       setRefreshing(true);
     }
     setError(null);
+
+    // Em localhost a resposta é quase instantânea; garantimos um feedback visual
+    // suave de pelo menos 450ms para completar uma rotação fluida sem sobressaltos
+    const minFeedbackTimer = !isInitial
+      ? new Promise(resolve => setTimeout(resolve, 450))
+      : Promise.resolve();
+
     try {
-      const data = await getProjects();
+      const [data] = await Promise.all([getProjects(), minFeedbackTimer]);
       setProjects(data);
     } catch (err) {
       setError('Erro ao conectar com a API .NET. Certifique-se de que o backend está rodando.');
@@ -139,6 +146,14 @@ export const DashboardPage: React.FC = () => {
             onClick={() => fetchDashboard(false)} 
             disabled={refreshing} 
             title="Atualizar dados dinamicamente sem recarregar a tela"
+            style={{
+              minWidth: '118px',
+              justifyContent: 'center',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              transition: 'background 0.2s ease, border-color 0.2s ease, opacity 0.2s ease'
+            }}
           >
             <RefreshCw size={15} className={refreshing ? 'spinning' : ''} />
             <span>{refreshing ? 'Atualizando...' : 'Atualizar'}</span>
@@ -226,7 +241,12 @@ export const DashboardPage: React.FC = () => {
         )}
       </div>
 
-      {/* Exibição dos Projetos */}
+      {/* Exibição dos Projetos com transição suave */}
+      <div style={{
+        transition: 'opacity 0.25s ease',
+        opacity: refreshing ? 0.72 : 1,
+        pointerEvents: refreshing ? 'none' : 'auto',
+      }}>
       {loading && projects.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
           <RefreshCw size={24} className="spinning" style={{ marginBottom: '0.75rem', color: 'var(--accent)' }} />
@@ -374,6 +394,7 @@ export const DashboardPage: React.FC = () => {
           ))}
         </div>
       )}
+      </div>
 
       {/* Modais */}
       <TimeEntryModal 
