@@ -10,7 +10,8 @@ import {
 import { Project } from '../types';
 import { getProjects } from '../services/api';
 import { CreateProjectModal } from '../components/CreateProjectModal';
-import { formatPercent, getStatusBadgeClass } from '../utils/format';
+import { formatPercent } from '../utils/format';
+import { HealthBadge } from '../components/HealthBadge';
 
 export const ProjectsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -139,7 +140,6 @@ export const ProjectsPage: React.FC = () => {
             </thead>
             <tbody>
               {filteredProjects.map((p) => {
-                const statusClass = getStatusBadgeClass(p.healthStatus);
                 return (
                   <tr 
                     key={p.id}
@@ -187,7 +187,11 @@ export const ProjectsPage: React.FC = () => {
                       {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(p.financialMargin)}
                     </td>
                     <td style={{ padding: '1.15rem 1.25rem' }}>
-                      <span className={`badge ${statusClass}`}>{p.healthStatus}</span>
+                      <HealthBadge 
+                        status={p.healthStatus} 
+                        reasons={p.healthReasons} 
+                        align="right" 
+                      />
                     </td>
                     <td style={{ padding: '1.15rem 1.25rem', textAlign: 'right' }}>
                       <button 

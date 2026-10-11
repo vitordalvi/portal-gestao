@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { Clock, ArrowUpRight, Building2, UserCheck } from 'lucide-react';
 import { Project } from '../types';
 import { useAuth } from '../context/AuthContext';
-import { formatPercent, getStatusBadgeClass } from '../utils/format';
+import { formatPercent } from '../utils/format';
+import { HealthBadge } from './HealthBadge';
 import './ProjectCard.css';
 
 interface Props {
@@ -28,8 +29,6 @@ export const ProjectCard: React.FC<Props> = ({ project, onLogHours }) => {
     style: 'currency', 
     currency: 'BRL' 
   }).format(project.financialMargin);
-  
-  const statusClass = getStatusBadgeClass(project.healthStatus);
 
   return (
     <div className="card">
@@ -45,7 +44,12 @@ export const ProjectCard: React.FC<Props> = ({ project, onLogHours }) => {
             {project.name}
           </div>
         </div>
-        <div className={`badge ${statusClass}`}>{project.healthStatus}</div>
+        <HealthBadge 
+          status={project.healthStatus} 
+          reasons={project.healthReasons} 
+          align="right" 
+          placement="bottom" 
+        />
       </div>
 
       {isUserAllocated && (

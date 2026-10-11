@@ -11,13 +11,14 @@ import {
   ArrowUpRight,
   Clock
 } from 'lucide-react';
+import { HealthBadge } from '../components/HealthBadge';
 import { Project } from '../types';
 import { getProjects } from '../services/api';
 import { ProjectCard } from '../components/ProjectCard';
 import { TimeEntryModal } from '../components/TimeEntryModal';
 import { CreateProjectModal } from '../components/CreateProjectModal';
 import { useAuth } from '../context/AuthContext';
-import { formatPercent, getStatusBadgeClass } from '../utils/format';
+import { formatPercent } from '../utils/format';
 
 export const DashboardPage: React.FC = () => {
   const { currentUser, isAnalyst } = useAuth();
@@ -267,7 +268,6 @@ export const DashboardPage: React.FC = () => {
             </thead>
             <tbody>
               {displayedProjects.map(p => {
-                const statusClass = getStatusBadgeClass(p.healthStatus);
                 return (
                   <tr key={p.id}>
                     <td>
@@ -307,7 +307,11 @@ export const DashboardPage: React.FC = () => {
                       </div>
                     </td>
                     <td style={{ textAlign: 'center' }}>
-                      <span className={`badge ${statusClass}`}>{p.healthStatus}</span>
+                      <HealthBadge 
+                        status={p.healthStatus} 
+                        reasons={p.healthReasons} 
+                        align="center" 
+                      />
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
