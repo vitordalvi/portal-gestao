@@ -1,11 +1,19 @@
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using portal_gestao_api.Infrastructure.Data;
+using portal_gestao_api.Domain.Interfaces;
+using portal_gestao_api.Infrastructure.Repositories;
+using portal_gestao_api.Application.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+    });
 builder.Services.AddOpenApi();
 
 builder.Services.AddCors(options =>
@@ -20,12 +28,29 @@ var connectionString = "Server=localhost,1433;Database=PortalGestaoDb;User Id=sa
 builder.Services.AddDbContext<AppDbContext>(options =>
     options.UseSqlServer(connectionString));
 
+// Dependency Injection - Clean Architecture / Domain & Application Services
+builder.Services.AddScoped<IProjectRepository, ProjectRepository>();
+builder.Services.AddScoped<ITimeEntryRepository, TimeEntryRepository>();
+builder.Services.AddScoped<IClientRepository, ClientRepository>();
+builder.Services.AddScoped<IUserRepository, UserRepository>();
+
+builder.Services.AddScoped<IProjectService, ProjectService>();
+builder.Services.AddScoped<ITimeEntryService, TimeEntryService>();
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    context.Database.EnsureCreated();
+    try
+    {
+        _ = context.Clients.Any();
+    }
+    catch
+    {
+        context.Database.EnsureDeleted();
+        context.Database.EnsureCreated();
+    }
 }
 
 if (app.Environment.IsDevelopment())

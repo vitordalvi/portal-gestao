@@ -16,6 +16,7 @@ public class Project
     public string? ErpId { get; set; }
 
     // Navigations
+    public Client? Client { get; set; }
     public List<Milestone> Milestones { get; set; } = new();
     public List<Allocation> Allocations { get; set; } = new();
 

@@ -243,5 +243,5 @@ O projeto foi configurado com Docker para facilitar a inicialização do banco d
    ```
 
 4. **Teste a API:**
-   Abra o seu navegador e acesse a interface interativa do Swagger na porta exibida no console (exemplo: `http://localhost:5000/swagger`). 
+   Abra o seu navegador e acesse a interface interativa do Swagger na porta exibida no console (exemplo: `http://localhost:5062/swagger`). 
    Lá você poderá testar o endpoint `GET /api/projects` e visualizar o cálculo de Saúde, Saldo e Margem Financeira em tempo real!

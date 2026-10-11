@@ -12,6 +12,7 @@ public class Allocation
 
     // Navigations
     public Project? Project { get; set; }
+    public User? User { get; set; }
     public List<TimeEntry> TimeEntries { get; set; } = new();
 
     // Calcula o custo total gasto por esta alocação baseada nos apontamentos

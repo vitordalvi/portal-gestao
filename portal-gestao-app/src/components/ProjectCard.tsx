@@ -1,18 +1,26 @@
 import React, { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { Clock, ArrowUpRight, Building2, UserCheck } from 'lucide-react';
 import { Project } from '../types';
+import { useAuth } from '../context/AuthContext';
+import { formatPercent, getStatusBadgeClass } from '../utils/format';
 import './ProjectCard.css';
 
 interface Props {
   project: Project;
+  onLogHours?: (projectId: string) => void;
 }
 
-export const ProjectCard: React.FC<Props> = ({ project }) => {
+export const ProjectCard: React.FC<Props> = ({ project, onLogHours }) => {
   const [fillWidth, setFillWidth] = useState('0%');
+  const navigate = useNavigate();
+  const { currentUser, isAnalyst } = useAuth();
+
+  const isUserAllocated = currentUser && project.allocatedUserIds?.includes(currentUser.id);
 
   useEffect(() => {
-    // Trigger animation after mount
     setTimeout(() => {
-      setFillWidth(`${project.physicalProgressPercentage}%`);
+      setFillWidth(`${Math.min(project.physicalProgressPercentage, 100)}%`);
     }, 100);
   }, [project.physicalProgressPercentage]);
 
@@ -21,41 +29,85 @@ export const ProjectCard: React.FC<Props> = ({ project }) => {
     currency: 'BRL' 
   }).format(project.financialMargin);
   
-  const statusClass = project.healthStatus.toLowerCase().replace('á', 'a').replace('ç', 'c');
+  const statusClass = getStatusBadgeClass(project.healthStatus);
 
   return (
     <div className="card">
       <div className="card-header">
-        <div className="card-title">{project.name}</div>
+        <div>
+          {project.clientName && (
+            <div className="card-client-tag">
+              <Building2 size={13} />
+              <span>{project.clientName}</span>
+            </div>
+          )}
+          <div className="card-title" onClick={() => navigate(`/projects/${project.id}`)}>
+            {project.name}
+          </div>
+        </div>
         <div className={`badge ${statusClass}`}>{project.healthStatus}</div>
       </div>
+
+      {isUserAllocated && (
+        <div className="allocated-badge-strip">
+          <UserCheck size={14} />
+          <span>Você está alocado neste projeto</span>
+        </div>
+      )}
       
       <div className="stat-group">
         <div>
           <div className="stat-label">Horas Consumidas</div>
-          <div className="stat-value">{project.consumedHours}h / {project.soldHours}h</div>
+          <div className="stat-value">{project.consumedHours}h <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>/ {project.soldHours}h</span></div>
         </div>
         <div style={{ textAlign: 'right' }}>
           <div className="stat-label">Saldo de Horas</div>
-          <div className="stat-value">{project.hourBalance}h</div>
+          <div className={`stat-value ${project.hourBalance < 0 ? 'negative-balance' : ''}`}>
+            {project.hourBalance}h
+          </div>
         </div>
       </div>
 
-      <div className="stat-group" style={{ border: 'none', paddingBottom: 0, marginBottom: 0 }}>
-        <div>
-          <div className="stat-label">Margem Financeira</div>
-          <div className="stat-value money">{marginFormatted}</div>
+      {!isAnalyst && (
+        <div className="stat-group" style={{ border: 'none', paddingBottom: 0, marginBottom: 0 }}>
+          <div>
+            <div className="stat-label">Margem Contratual</div>
+            <div className="stat-value money">{marginFormatted}</div>
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="progress-container">
-        <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
           <span className="stat-label">Avanço Físico</span>
-          <span className="stat-value" style={{ fontSize: '0.875rem' }}>{project.physicalProgressPercentage}%</span>
+          <span className="stat-value" style={{ fontSize: '0.85rem' }}>{formatPercent(project.physicalProgressPercentage)}</span>
         </div>
         <div className="progress-bar-bg">
           <div className="progress-bar-fill" style={{ width: fillWidth }}></div>
         </div>
+      </div>
+
+      <div className="card-actions">
+        <button 
+          className="btn btn-secondary card-action-btn"
+          onClick={() => navigate(`/projects/${project.id}`)}
+        >
+          <span>Gerenciar</span>
+          <ArrowUpRight size={15} />
+        </button>
+
+        {onLogHours && (
+          <button 
+            className="btn btn-primary card-action-btn"
+            onClick={(e) => {
+              e.stopPropagation();
+              onLogHours(project.id);
+            }}
+          >
+            <Clock size={15} />
+            <span>Apontar</span>
+          </button>
+        )}
       </div>
     </div>
   );
