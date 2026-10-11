@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 using portal_gestao_api.Domain.Entities;
 using portal_gestao_api.Infrastructure.Data;
+using portal_gestao_api.Application.DTOs;
 
 namespace portal_gestao_api.Controllers;
 
@@ -16,26 +18,30 @@ public class TimeEntriesController : ControllerBase
     }
 
     /// <summary>
-    /// Adiciona um novo apontamento de horas a uma alocação.
+    /// Lança horas trabalhadas (TimeEntry) para um usuário em um projeto específico.
     /// </summary>
     [HttpPost]
-    public async Task<IActionResult> CreateTimeEntry([FromBody] CreateTimeEntryRequest request)
-    {
+    public async Task<IActionResult> CreateTimeEntry([FromBody] CreateTimeEntryDto request)
+    {   
         if (request.Hours <= 0)
         {
             return BadRequest("As horas apontadas devem ser maiores que zero.");
         }
 
-        var allocationExists = _context.Allocations.Any(a => a.Id == request.AllocationId);
-        if (!allocationExists)
+        // O apontamento de horas é feito na interface em cima do "Projeto", 
+        // mas no banco de dados amarramos à "Alocação" daquele Usuário naquele Projeto.
+        var allocation = await _context.Allocations
+            .FirstOrDefaultAsync(a => a.ProjectId == request.ProjectId && a.UserId == request.UserId);
+
+        if (allocation == null)
         {
-            return NotFound("Alocação não encontrada.");
+            return NotFound("Usuário não está alocado neste projeto.");
         }
 
         var timeEntry = new TimeEntry
         {
             Id = Guid.NewGuid(),
-            AllocationId = request.AllocationId,
+            AllocationId = allocation.Id,
             Date = request.Date,
             Hours = request.Hours,
             Description = request.Description
@@ -46,12 +52,4 @@ public class TimeEntriesController : ControllerBase
 
         return Created($"/api/time-entries/{timeEntry.Id}", timeEntry);
     }
-}
-
-public class CreateTimeEntryRequest
-{
-    public Guid AllocationId { get; set; }
-    public DateTime Date { get; set; }
-    public decimal Hours { get; set; }
-    public string Description { get; set; } = string.Empty;
 }

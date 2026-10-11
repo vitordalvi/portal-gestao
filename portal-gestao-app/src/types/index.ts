@@ -10,7 +10,8 @@ export interface Project {
 }
 
 export interface TimeEntryRequest {
-  allocationId: string;
+  projectId: string;
+  userId: string;
   date: string;
   hours: number;
   description: string;
