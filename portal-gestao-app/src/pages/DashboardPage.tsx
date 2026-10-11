@@ -12,6 +12,7 @@ import {
   Clock
 } from 'lucide-react';
 import { HealthBadge } from '../components/HealthBadge';
+import { TotvsSyncBadge } from '../components/TotvsSyncBadge';
 import { Project } from '../types';
 import { getProjects } from '../services/api';
 import { ProjectCard } from '../components/ProjectCard';
@@ -126,10 +127,13 @@ export const DashboardPage: React.FC = () => {
             </button>
           </div>
 
-          <button className="btn btn-secondary" onClick={fetchDashboard} disabled={loading} title="Recarregar dados">
-            <RefreshCw size={15} className={loading ? 'spinning' : ''} />
-            <span>Atualizar</span>
-          </button>
+          <TotvsSyncBadge 
+            lastSyncDate={projects[0]?.lastSyncDate} 
+            erpId="TOTVS" 
+            onSync={fetchDashboard} 
+            isSyncing={loading} 
+            canSync={true} 
+          />
 
           {!isAnalyst && (
             <button className="btn btn-secondary" onClick={() => setIsCreateModalOpen(true)}>
@@ -277,8 +281,12 @@ export const DashboardPage: React.FC = () => {
                       >
                         {p.name}
                       </div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'ui-monospace, monospace' }}>
-                        {p.erpId || 'TOTVS-PRJ'}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginTop: '0.2rem' }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'ui-monospace, monospace' }}>
+                          {p.erpId || 'TOTVS-PRJ'}
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>•</span>
+                        <TotvsSyncBadge compact lastSyncDate={p.lastSyncDate} syncStatus={p.syncStatus} erpId={p.erpId} />
                       </div>
                     </td>
                     <td>{p.clientName || 'N/A'}</td>

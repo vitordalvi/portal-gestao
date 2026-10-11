@@ -121,3 +121,12 @@ export const toggleMilestone = async (projectId: string, milestoneId: string): P
   await api.patch(`/projects/${projectId}/milestones/${milestoneId}/toggle`);
 };
 
+/**
+ * Dispara sincronização sob demanda do projeto com o ERP TOTVS RM / Protheus.
+ */
+export const syncProject = async (projectId: string): Promise<ProjectDetail> => {
+  const response = await api.post(`/projects/${projectId}/sync`);
+  return response.data;
+};
+
+

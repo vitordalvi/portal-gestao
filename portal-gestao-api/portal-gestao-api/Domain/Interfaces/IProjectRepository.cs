@@ -23,6 +23,11 @@ public interface IProjectRepository
     Task AddAsync(Project project);
 
     /// <summary>
+    /// Atualiza dados de um projeto existente (ex: data e status de sincronização com o ERP).
+    /// </summary>
+    Task UpdateProjectAsync(Project project);
+
+    /// <summary>
     /// Adiciona uma nova alocação de analista a um projeto.
     /// </summary>
     Task AddAllocationAsync(Allocation allocation);

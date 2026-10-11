@@ -127,7 +127,9 @@ public class AppDbContext : DbContext
                 StartDate = DateTime.UtcNow.AddMonths(-2),
                 EndDate = DateTime.UtcNow.AddMonths(2),
                 Status = "Active",
-                ErpId = "TOTVS-PRJ-001"
+                ErpId = "TOTVS-PRJ-001",
+                LastSyncDate = DateTime.UtcNow.AddMinutes(-14),
+                SyncStatus = "Sincronizado"
             },
             new Project
             {
@@ -140,7 +142,9 @@ public class AppDbContext : DbContext
                 StartDate = DateTime.UtcNow.AddMonths(-1),
                 EndDate = DateTime.UtcNow.AddMonths(1),
                 Status = "Active",
-                ErpId = "TOTVS-PRJ-002"
+                ErpId = "TOTVS-PRJ-002",
+                LastSyncDate = DateTime.UtcNow.AddHours(-1).AddMinutes(-25),
+                SyncStatus = "Sincronizado"
             },
             new Project
             {
@@ -153,7 +157,9 @@ public class AppDbContext : DbContext
                 StartDate = DateTime.UtcNow.AddMonths(-2),
                 EndDate = DateTime.UtcNow.AddDays(-5),
                 Status = "Active",
-                ErpId = "TOTVS-PRJ-003"
+                ErpId = "TOTVS-PRJ-003",
+                LastSyncDate = DateTime.UtcNow.AddHours(-3).AddMinutes(-10),
+                SyncStatus = "Sincronizado"
             }
         );
 

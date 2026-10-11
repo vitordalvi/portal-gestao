@@ -142,4 +142,16 @@ public class ProjectsController : ControllerBase
         if (result == null) return NotFound(new { message = "Marco ou projeto não encontrado." });
         return Ok(result);
     }
+
+    /// <summary>
+    /// POST /api/projects/{id}/sync
+    /// Dispara a sincronização manual do projeto com o ERP TOTVS RM / Protheus.
+    /// </summary>
+    [HttpPost("{id}/sync")]
+    public async Task<IActionResult> SyncWithErp(Guid id)
+    {
+        var result = await _projectService.SyncProjectWithErpAsync(id);
+        if (result == null) return NotFound(new { message = "Projeto não encontrado." });
+        return Ok(result);
+    }
 }

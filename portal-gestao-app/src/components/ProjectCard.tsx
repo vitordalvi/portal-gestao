@@ -5,6 +5,7 @@ import { Project } from '../types';
 import { useAuth } from '../context/AuthContext';
 import { formatPercent } from '../utils/format';
 import { HealthBadge } from './HealthBadge';
+import { TotvsSyncBadge } from './TotvsSyncBadge';
 import './ProjectCard.css';
 
 interface Props {
@@ -42,6 +43,9 @@ export const ProjectCard: React.FC<Props> = ({ project, onLogHours }) => {
           )}
           <div className="card-title" onClick={() => navigate(`/projects/${project.id}`)}>
             {project.name}
+          </div>
+          <div style={{ marginTop: '0.35rem' }}>
+            <TotvsSyncBadge compact lastSyncDate={project.lastSyncDate} syncStatus={project.syncStatus} erpId={project.erpId} />
           </div>
         </div>
         <HealthBadge 

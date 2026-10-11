@@ -29,7 +29,10 @@ public class ProjectService : IProjectService
             HealthStatus = p.GetHealthStatus(),
             HealthReasons = p.GetHealthReasons(),
             FinancialMargin = p.GetFinancialMargin(),
-            AllocatedUserIds = p.Allocations.Select(a => a.UserId).ToList()
+            AllocatedUserIds = p.Allocations.Select(a => a.UserId).ToList(),
+            p.ErpId,
+            p.LastSyncDate,
+            p.SyncStatus
         });
     }
 
@@ -49,6 +52,8 @@ public class ProjectService : IProjectService
             p.EndDate,
             p.Status,
             p.ErpId,
+            p.LastSyncDate,
+            p.SyncStatus,
             ConsumedHours = p.GetConsumedHours(),
             HourBalance = p.GetHourBalance(),
             PhysicalProgressPercentage = p.GetPhysicalProgress(),
@@ -211,5 +216,21 @@ public class ProjectService : IProjectService
         await _projectRepository.UpdateMilestoneAsync(milestone);
 
         return milestone;
+    }
+
+    /// <summary>
+    /// Dispara a sincronização manual sob demanda com o ERP TOTVS RM / Protheus,
+    /// atualizando a data e hora da última sincronização para agora e status 'Sincronizado'.
+    /// </summary>
+    public async Task<object?> SyncProjectWithErpAsync(Guid id)
+    {
+        var project = await _projectRepository.GetByIdWithDetailsAsync(id);
+        if (project == null) return null;
+
+        project.LastSyncDate = DateTime.UtcNow;
+        project.SyncStatus = "Sincronizado";
+        await _projectRepository.UpdateProjectAsync(project);
+
+        return await GetProjectByIdAsync(id);
     }
 }

@@ -42,6 +42,12 @@ public class ProjectRepository : IProjectRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task UpdateProjectAsync(Project project)
+    {
+        _context.Projects.Update(project);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task AddAllocationAsync(Allocation allocation)
     {
         await _context.Allocations.AddAsync(allocation);

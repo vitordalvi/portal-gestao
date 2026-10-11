@@ -55,6 +55,8 @@ export interface ProjectDetail {
   endDate: string;
   status: string;
   erpId: string;
+  lastSyncDate?: string;
+  syncStatus?: string;
   consumedHours: number;
   hourBalance: number;
   physicalProgressPercentage: number;
@@ -85,6 +87,8 @@ export interface Project {
   financialMargin: number;
   allocatedUserIds?: string[];
   erpId?: string;
+  lastSyncDate?: string;
+  syncStatus?: string;
 }
 
 export interface CreateProjectRequest {

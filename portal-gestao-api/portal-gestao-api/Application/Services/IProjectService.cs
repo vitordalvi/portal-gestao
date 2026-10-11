@@ -59,4 +59,10 @@ public interface IProjectService
     /// Alterna o status de conclusão (concluído/pendente) de um marco de entrega.
     /// </summary>
     Task<object?> ToggleMilestoneAsync(Guid projectId, Guid milestoneId);
+
+    /// <summary>
+    /// Dispara a sincronização manual do projeto com o ERP TOTVS RM / Protheus,
+    /// atualizando LastSyncDate para agora e SyncStatus para 'Sincronizado'.
+    /// </summary>
+    Task<object?> SyncProjectWithErpAsync(Guid id);
 }

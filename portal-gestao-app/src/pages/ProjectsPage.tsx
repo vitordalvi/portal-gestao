@@ -12,6 +12,7 @@ import { getProjects } from '../services/api';
 import { CreateProjectModal } from '../components/CreateProjectModal';
 import { formatPercent } from '../utils/format';
 import { HealthBadge } from '../components/HealthBadge';
+import { TotvsSyncBadge } from '../components/TotvsSyncBadge';
 
 export const ProjectsPage: React.FC = () => {
   const navigate = useNavigate();
@@ -153,7 +154,14 @@ export const ProjectsPage: React.FC = () => {
                     onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
                   >
                     <td style={{ padding: '1.15rem 1.25rem', fontWeight: 600, color: 'var(--text-primary)' }}>
-                      {p.name}
+                      <div>{p.name}</div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginTop: '0.2rem' }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'ui-monospace, monospace' }}>
+                          {p.erpId || 'TOTVS-PRJ'}
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>•</span>
+                        <TotvsSyncBadge compact lastSyncDate={p.lastSyncDate} syncStatus={p.syncStatus} erpId={p.erpId} />
+                      </div>
                     </td>
                     <td style={{ padding: '1.15rem 1.25rem', color: 'var(--text-secondary)' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>

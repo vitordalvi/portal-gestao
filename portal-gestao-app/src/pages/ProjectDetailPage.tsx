@@ -12,8 +12,9 @@ import {
   Trash2
 } from 'lucide-react';
 import { HealthBadge } from '../components/HealthBadge';
+import { TotvsSyncBadge } from '../components/TotvsSyncBadge';
 import { ProjectDetail, Milestone, AllocationDetail } from '../types';
-import { getProjectById, toggleMilestone, deleteMilestone, deleteAllocation } from '../services/api';
+import { getProjectById, toggleMilestone, deleteMilestone, deleteAllocation, syncProject } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { AllocateModal } from '../components/AllocateModal';
 import { EditAllocationModal } from '../components/EditAllocationModal';
@@ -45,6 +46,7 @@ export const ProjectDetailPage: React.FC = () => {
   const [deallocatingAllocation, setDeallocatingAllocation] = useState<AllocationDetail | null>(null);
   const [isDeallocatingAction, setIsDeallocatingAction] = useState(false);
   const [deallocateError, setDeallocateError] = useState<string | null>(null);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const fetchProject = async () => {
     if (!id) return;
@@ -117,6 +119,22 @@ export const ProjectDetailPage: React.FC = () => {
     }
   };
 
+  /**
+   * Dispara a sincronização manual sob demanda com o ERP TOTVS.
+   */
+  const handleSyncWithErp = async () => {
+    if (!project || isSyncing) return;
+    setIsSyncing(true);
+    try {
+      const updated = await syncProject(project.id);
+      setProject(updated);
+    } catch (err) {
+      console.error('Erro ao sincronizar com TOTVS:', err);
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
   useEffect(() => {
     fetchProject();
   }, [id]);
@@ -185,9 +203,14 @@ export const ProjectDetailPage: React.FC = () => {
                 align="left" 
                 placement="bottom" 
               />
-              <span className="badge" style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)' }}>
-                ERP: {project.erpId || 'TOTVS'}
-              </span>
+              <TotvsSyncBadge 
+                lastSyncDate={project.lastSyncDate}
+                syncStatus={project.syncStatus}
+                erpId={project.erpId}
+                onSync={handleSyncWithErp}
+                isSyncing={isSyncing}
+                canSync={!isAnalyst}
+              />
             </div>
 
             {project.client && (
