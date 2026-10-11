@@ -94,6 +94,7 @@
 
 .input-group:focus-within {
   border-color: var(--accent);
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.35);
 }
 
 .input-group-addon {
@@ -249,6 +250,17 @@ input[type=number] {
 .btn-modal-emerald:hover:not(:disabled) {
   background: #16a34a;
   border-color: #22c55e;
+}
+
+/* Acessibilidade de Foco via Teclado */
+.modal-close-btn:focus-visible,
+.quick-chip:focus-visible,
+.btn-modal-cancel:focus-visible,
+.btn-modal-primary:focus-visible,
+.btn-modal-purple:focus-visible,
+.btn-modal-emerald:focus-visible {
+  outline: 2px solid var(--accent) !important;
+  outline-offset: 2px !important;
 }
 
 @media (max-width: 640px) {
