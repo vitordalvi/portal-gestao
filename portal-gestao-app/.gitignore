@@ -25,3 +25,4 @@ dist-ssr
 tsconfig.tsbuildinfo
 test-results/
 playwright-report/
+.vite/
