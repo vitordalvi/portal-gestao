@@ -214,3 +214,34 @@ Para suportar alta escala, dezenas de milhares de projetos e acessos simultâneo
 1.  **Cache Distribuído (Redis):** Implementar Redis para chamadas de leitura massiva (`GET /api/projects`), invalidando o cache apenas quando o Worker de Sincronização trouxer atualizações do ERP.
 2.  **Mensageria (RabbitMQ / Kafka):** Mudar a sincronização do TOTVS RM de *Polling* (Background Jobs) para uma arquitetura orientada a eventos. O ERP publicaria um evento `ProjectUpdated` na fila e o nosso sistema apenas consumiria, garantindo *Real-Time* sem sobrecarregar a rede.
 3.  **SSO Corporativo (Keycloak / Azure AD):** Substituir a tabela própria de senhas e papéis por um gateway de autenticação federado (OpenID Connect), garantindo governança total dos acessos sem precisar gerenciar credenciais no nosso banco.
+
+---
+
+### 7. Como Executar o Projeto Localmente
+
+O projeto foi configurado com Docker para facilitar a inicialização do banco de dados e conta com um **Seed Automático** (Entity Framework) que cria a estrutura e insere dados falsos de teste no momento da inicialização.
+
+**Pré-requisitos:**
+*   [Docker](https://docs.docker.com/get-docker/) e Docker Compose
+*   [.NET 9 SDK](https://dotnet.microsoft.com/download)
+
+**Passo a Passo:**
+
+1. Na raiz do repositório, suba o banco de dados SQL Server:
+   ```bash
+   docker compose up -d database
+   ```
+
+2. Navegue até a pasta da API:
+   ```bash
+   cd portal-gestao-api
+   ```
+
+3. Inicie o projeto C#:
+   ```bash
+   dotnet run
+   ```
+
+4. **Teste a API:**
+   Abra o seu navegador e acesse a interface interativa do Swagger na porta exibida no console (exemplo: `http://localhost:5000/swagger`). 
+   Lá você poderá testar o endpoint `GET /api/projects` e visualizar o cálculo de Saúde, Saldo e Margem Financeira em tempo real!
