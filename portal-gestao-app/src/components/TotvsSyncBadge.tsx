@@ -91,33 +91,23 @@ export const TotvsSyncBadge: React.FC<TotvsSyncBadgeProps> = ({
             display: 'inline-flex',
             alignItems: 'center',
             justifyContent: 'center',
-            minWidth: '88px',
+            minWidth: '116px',
             gap: '0.35rem',
             fontSize: '0.75rem',
             fontWeight: 500,
             borderRadius: '4px',
-            transition: 'all 0.2s ease',
+            transition: 'background 0.2s ease, opacity 0.2s ease',
             opacity: isSyncing ? 0.75 : 1,
           }}
           title="Sincronizar agora com o ERP TOTVS"
         >
           <RefreshCw 
             size={12} 
-            style={{ 
-              animation: isSyncing ? 'spin 0.8s linear infinite' : 'none',
-              transformOrigin: 'center center'
-            }} 
+            className={isSyncing ? 'spinning' : ''} 
           />
           <span>{isSyncing ? 'Sincronizando...' : 'Atualizar'}</span>
         </button>
       )}
-
-      <style>{`
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
     </div>
   );
 };

@@ -125,8 +125,12 @@ export const ProjectDetailPage: React.FC = () => {
   const handleSyncWithErp = async () => {
     if (!project || isSyncing) return;
     setIsSyncing(true);
+
+    // Feedback visual suave de pelo menos 500ms para completar um ciclo fluido de rotação do ícone
+    const minFeedbackTimer = new Promise(resolve => setTimeout(resolve, 500));
+
     try {
-      const updated = await syncProject(project.id);
+      const [updated] = await Promise.all([syncProject(project.id), minFeedbackTimer]);
       setProject(updated);
     } catch (err) {
       console.error('Erro ao sincronizar com TOTVS:', err);
@@ -189,8 +193,15 @@ export const ProjectDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Header do Projeto */}
-      <div className="glass-panel" style={{ marginBottom: '2rem' }}>
+      {/* Header do Projeto com transição fluida */}
+      <div 
+        className="glass-panel" 
+        style={{ 
+          marginBottom: '2rem',
+          transition: 'opacity 0.25s ease',
+          opacity: isSyncing ? 0.8 : 1,
+        }}
+      >
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.5rem' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
@@ -279,8 +290,14 @@ export const ProjectDetailPage: React.FC = () => {
         </div>
       </div>
 
-      {/* Grid com Duas Colunas: Analistas Alocados & Marcos */}
-      <div className="project-detail-grid">
+      {/* Grid com Duas Colunas: Analistas Alocados & Marcos com transição fluida */}
+      <div 
+        className="project-detail-grid"
+        style={{
+          transition: 'opacity 0.25s ease',
+          opacity: isSyncing ? 0.8 : 1,
+        }}
+      >
         
         {/* Seção de Analistas Alocados */}
         <div className="glass-panel">
