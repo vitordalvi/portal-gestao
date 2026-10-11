@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, Trash2, AlertTriangle } from 'lucide-react';
+import { useModalA11y } from '../hooks/useModalA11y';
 import './TimeEntryModal.css';
 
 /**
@@ -32,10 +33,12 @@ export const ConfirmDeleteMilestoneModal: React.FC<Props> = ({
   milestoneWeight,
   isDeleting,
 }) => {
+  const { overlayProps } = useModalA11y({ isOpen, onClose, disabled: isDeleting });
+
   if (!isOpen) return null;
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" {...overlayProps}>
       <div className="modal-content" style={{ maxWidth: '440px' }}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }}>

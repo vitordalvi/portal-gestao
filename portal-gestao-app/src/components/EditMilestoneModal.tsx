@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Percent, Check } from 'lucide-react';
 import { Milestone } from '../types';
 import { updateMilestone } from '../services/api';
+import { useModalA11y } from '../hooks/useModalA11y';
 import './TimeEntryModal.css';
 
 /**
@@ -42,6 +43,8 @@ export const EditMilestoneModal: React.FC<Props> = ({
   const [weight, setWeight] = useState('20');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { overlayProps } = useModalA11y({ isOpen, onClose, disabled: isSubmitting });
 
   useEffect(() => {
     if (milestone) {
@@ -88,7 +91,7 @@ export const EditMilestoneModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" {...overlayProps}>
       <div className="modal-content">
         <div className="modal-header">
           <div>

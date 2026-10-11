@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Flag, Percent } from 'lucide-react';
 import { createMilestone } from '../services/api';
+import { useModalA11y } from '../hooks/useModalA11y';
 import './TimeEntryModal.css';
 
 interface Props {
@@ -25,6 +26,8 @@ export const CreateMilestoneModal: React.FC<Props> = ({
   const [weight, setWeight] = useState(suggestedWeight > 0 ? suggestedWeight.toString() : '20');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { overlayProps } = useModalA11y({ isOpen, onClose, disabled: isSubmitting });
 
   if (!isOpen) return null;
 
@@ -60,7 +63,7 @@ export const CreateMilestoneModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" {...overlayProps}>
       <div className="modal-content">
         <div className="modal-header">
           <div>
