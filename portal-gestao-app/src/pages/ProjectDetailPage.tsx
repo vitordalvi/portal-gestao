@@ -48,9 +48,9 @@ export const ProjectDetailPage: React.FC = () => {
   const [deallocateError, setDeallocateError] = useState<string | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
 
-  const fetchProject = async () => {
+  const fetchProject = async (isInitial = false) => {
     if (!id) return;
-    setLoading(true);
+    if (isInitial) setLoading(true);
     try {
       const data = await getProjectById(id);
       setProject(data);
@@ -58,7 +58,7 @@ export const ProjectDetailPage: React.FC = () => {
       console.error(err);
       setError('Erro ao carregar os detalhes do projeto.');
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
     }
   };
 
@@ -136,10 +136,10 @@ export const ProjectDetailPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchProject();
+    fetchProject(true);
   }, [id]);
 
-  if (loading) {
+  if (loading && !project) {
     return (
       <div style={{ textAlign: 'center', padding: '5rem', color: 'var(--text-secondary)' }}>
         <div>Carregando detalhes do projeto...</div>

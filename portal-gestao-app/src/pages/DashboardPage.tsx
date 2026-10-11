@@ -26,6 +26,7 @@ export const DashboardPage: React.FC = () => {
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   
@@ -33,8 +34,12 @@ export const DashboardPage: React.FC = () => {
   const [selectedProjectIdForTime, setSelectedProjectIdForTime] = useState<string | undefined>();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const fetchDashboard = async () => {
-    setLoading(true);
+  const fetchDashboard = async (isInitial = false) => {
+    if (isInitial) {
+      setLoading(true);
+    } else {
+      setRefreshing(true);
+    }
     setError(null);
     try {
       const data = await getProjects();
@@ -42,12 +47,13 @@ export const DashboardPage: React.FC = () => {
     } catch (err) {
       setError('Erro ao conectar com a API .NET. Certifique-se de que o backend está rodando.');
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
-    fetchDashboard();
+    fetchDashboard(true);
   }, []);
 
   // Filtra projetos para o analista
@@ -127,13 +133,16 @@ export const DashboardPage: React.FC = () => {
             </button>
           </div>
 
-          <TotvsSyncBadge 
-            lastSyncDate={projects[0]?.lastSyncDate} 
-            erpId="TOTVS" 
-            onSync={fetchDashboard} 
-            isSyncing={loading} 
-            canSync={true} 
-          />
+          <button 
+            type="button"
+            className="btn btn-secondary" 
+            onClick={() => fetchDashboard(false)} 
+            disabled={refreshing} 
+            title="Atualizar dados dinamicamente sem recarregar a tela"
+          >
+            <RefreshCw size={15} className={refreshing ? 'spinning' : ''} />
+            <span>{refreshing ? 'Atualizando...' : 'Atualizar'}</span>
+          </button>
 
           {!isAnalyst && (
             <button className="btn btn-secondary" onClick={() => setIsCreateModalOpen(true)}>
@@ -218,7 +227,7 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Exibição dos Projetos */}
-      {loading ? (
+      {loading && projects.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
           <RefreshCw size={24} className="spinning" style={{ marginBottom: '0.75rem', color: 'var(--accent)' }} />
           <div style={{ fontSize: '0.88rem' }}>Carregando dados da fábrica TOTVS...</div>
