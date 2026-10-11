@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, UserPlus, Calendar, Clock } from 'lucide-react';
 import { allocateUserToProject, getUsers } from '../services/api';
 import { User } from '../types';
+import { useModalA11y } from '../hooks/useModalA11y';
 import './TimeEntryModal.css';
 
 interface Props {
@@ -31,6 +32,8 @@ export const AllocateModal: React.FC<Props> = ({
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { overlayProps } = useModalA11y({ isOpen, onClose, disabled: isSubmitting });
 
   useEffect(() => {
     if (isOpen) {
@@ -79,7 +82,7 @@ export const AllocateModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" {...overlayProps}>
       <div className="modal-content">
         <div className="modal-header">
           <div>

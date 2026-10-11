@@ -3,6 +3,7 @@ import { X, Clock } from 'lucide-react';
 import { createTimeEntry } from '../services/api';
 import { Project } from '../types';
 import { useAuth } from '../context/AuthContext';
+import { useModalA11y } from '../hooks/useModalA11y';
 import './TimeEntryModal.css';
 
 interface Props {
@@ -26,6 +27,8 @@ export const TimeEntryModal: React.FC<Props> = ({
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { overlayProps } = useModalA11y({ isOpen, onClose, disabled: isSubmitting });
 
   useEffect(() => {
     if (initialProjectId) {
@@ -72,7 +75,7 @@ export const TimeEntryModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" {...overlayProps}>
       <div className="modal-content">
         <div className="modal-header">
           <h2 className="modal-title">Apontamento de Horas</h2>

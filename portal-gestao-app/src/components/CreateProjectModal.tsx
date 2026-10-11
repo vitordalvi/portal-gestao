@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, FolderPlus, Calendar } from 'lucide-react';
 import { createProject, getClients } from '../services/api';
 import { Client } from '../types';
+import { useModalA11y } from '../hooks/useModalA11y';
 import './TimeEntryModal.css';
 
 interface Props {
@@ -25,6 +26,8 @@ export const CreateProjectModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { overlayProps } = useModalA11y({ isOpen, onClose, disabled: isSubmitting });
 
   useEffect(() => {
     if (isOpen) {
@@ -74,7 +77,7 @@ export const CreateProjectModal: React.FC<Props> = ({ isOpen, onClose, onSuccess
   };
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" {...overlayProps}>
       <div className="modal-content" style={{ maxWidth: '580px' }}>
         <div className="modal-header">
           <h2 className="modal-title">Novo Projeto</h2>

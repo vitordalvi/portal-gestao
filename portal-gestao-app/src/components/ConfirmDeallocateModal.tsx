@@ -1,5 +1,6 @@
 import React from 'react';
 import { X, UserMinus, AlertTriangle, AlertCircle } from 'lucide-react';
+import { useModalA11y } from '../hooks/useModalA11y';
 import './TimeEntryModal.css';
 
 /**
@@ -39,12 +40,14 @@ export const ConfirmDeallocateModal: React.FC<Props> = ({
   isDeallocating,
   errorMessage,
 }) => {
+  const { overlayProps } = useModalA11y({ isOpen, onClose, disabled: isDeallocating });
+
   if (!isOpen) return null;
 
   const hasLoggedHours = consumedHours > 0;
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" {...overlayProps}>
       <div className="modal-content" style={{ maxWidth: '460px' }}>
         <div className="modal-header">
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--danger)' }}>

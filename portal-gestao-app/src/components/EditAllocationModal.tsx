@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { X, Check, Clock } from 'lucide-react';
 import { AllocationDetail } from '../types';
 import { updateAllocation } from '../services/api';
+import { useModalA11y } from '../hooks/useModalA11y';
 import './TimeEntryModal.css';
 
 /**
@@ -43,6 +44,8 @@ export const EditAllocationModal: React.FC<Props> = ({
   const [endDate, setEndDate] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const { overlayProps } = useModalA11y({ isOpen, onClose, disabled: isSubmitting });
 
   useEffect(() => {
     if (allocation) {
@@ -97,7 +100,7 @@ export const EditAllocationModal: React.FC<Props> = ({
   };
 
   return (
-    <div className="modal-overlay">
+    <div className="modal-overlay" {...overlayProps}>
       <div className="modal-content">
         <div className="modal-header">
           <div>
