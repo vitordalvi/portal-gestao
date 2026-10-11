@@ -363,11 +363,11 @@ export const ProjectDetailPage: React.FC = () => {
                       </div>
 
                       {!isAnalyst && (
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
                           <button
                             type="button"
                             className="btn btn-secondary"
-                            style={{ padding: '0.3rem 0.45rem', fontSize: '0.75rem', borderColor: 'var(--card-border-subtle)' }}
+                            style={{ padding: '0.35rem 0.55rem', fontSize: '0.75rem', borderColor: 'var(--card-border-subtle)' }}
                             title="Editar horas e custo da alocação"
                             onClick={() => setEditingAllocation(alloc)}
                           >
@@ -377,7 +377,7 @@ export const ProjectDetailPage: React.FC = () => {
                             type="button"
                             className="btn btn-secondary"
                             style={{ 
-                              padding: '0.3rem 0.45rem', 
+                              padding: '0.35rem 0.55rem', 
                               fontSize: '0.75rem', 
                               color: 'var(--danger)',
                               borderColor: 'rgba(239, 68, 68, 0.25)'
@@ -491,11 +491,11 @@ export const ProjectDetailPage: React.FC = () => {
                   </div>
 
                   {!isAnalyst && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
                       <button
                         type="button"
                         className="btn btn-secondary"
-                        style={{ padding: '0.3rem 0.45rem', fontSize: '0.75rem', borderColor: 'var(--card-border-subtle)' }}
+                        style={{ padding: '0.35rem 0.55rem', fontSize: '0.75rem', borderColor: 'var(--card-border-subtle)' }}
                         title="Editar este marco"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -508,7 +508,7 @@ export const ProjectDetailPage: React.FC = () => {
                         type="button"
                         className="btn btn-secondary"
                         style={{ 
-                          padding: '0.3rem 0.45rem', 
+                          padding: '0.35rem 0.55rem', 
                           fontSize: '0.75rem', 
                           color: 'var(--danger)',
                           borderColor: 'rgba(239, 68, 68, 0.25)'
