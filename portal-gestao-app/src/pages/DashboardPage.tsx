@@ -11,19 +11,22 @@ import {
   ArrowUpRight,
   Clock
 } from 'lucide-react';
+import { HealthBadge } from '../components/HealthBadge';
+import { TotvsSyncBadge } from '../components/TotvsSyncBadge';
 import { Project } from '../types';
 import { getProjects } from '../services/api';
 import { ProjectCard } from '../components/ProjectCard';
 import { TimeEntryModal } from '../components/TimeEntryModal';
 import { CreateProjectModal } from '../components/CreateProjectModal';
 import { useAuth } from '../context/AuthContext';
-import { formatPercent, getStatusBadgeClass } from '../utils/format';
+import { formatPercent } from '../utils/format';
 
 export const DashboardPage: React.FC = () => {
   const { currentUser, isAnalyst } = useAuth();
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table');
   
@@ -31,8 +34,12 @@ export const DashboardPage: React.FC = () => {
   const [selectedProjectIdForTime, setSelectedProjectIdForTime] = useState<string | undefined>();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
-  const fetchDashboard = async () => {
-    setLoading(true);
+  const fetchDashboard = async (isInitial = false) => {
+    if (isInitial) {
+      setLoading(true);
+    } else {
+      setRefreshing(true);
+    }
     setError(null);
     try {
       const data = await getProjects();
@@ -40,12 +47,13 @@ export const DashboardPage: React.FC = () => {
     } catch (err) {
       setError('Erro ao conectar com a API .NET. Certifique-se de que o backend está rodando.');
     } finally {
-      setLoading(false);
+      if (isInitial) setLoading(false);
+      setRefreshing(false);
     }
   };
 
   useEffect(() => {
-    fetchDashboard();
+    fetchDashboard(true);
   }, []);
 
   // Filtra projetos para o analista
@@ -125,9 +133,15 @@ export const DashboardPage: React.FC = () => {
             </button>
           </div>
 
-          <button className="btn btn-secondary" onClick={fetchDashboard} disabled={loading} title="Recarregar dados">
-            <RefreshCw size={15} className={loading ? 'spinning' : ''} />
-            <span>Atualizar</span>
+          <button 
+            type="button"
+            className="btn btn-secondary" 
+            onClick={() => fetchDashboard(false)} 
+            disabled={refreshing} 
+            title="Atualizar dados dinamicamente sem recarregar a tela"
+          >
+            <RefreshCw size={15} className={refreshing ? 'spinning' : ''} />
+            <span>{refreshing ? 'Atualizando...' : 'Atualizar'}</span>
           </button>
 
           {!isAnalyst && (
@@ -213,7 +227,7 @@ export const DashboardPage: React.FC = () => {
       </div>
 
       {/* Exibição dos Projetos */}
-      {loading ? (
+      {loading && projects.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '4rem', color: 'var(--text-muted)' }}>
           <RefreshCw size={24} className="spinning" style={{ marginBottom: '0.75rem', color: 'var(--accent)' }} />
           <div style={{ fontSize: '0.88rem' }}>Carregando dados da fábrica TOTVS...</div>
@@ -267,7 +281,6 @@ export const DashboardPage: React.FC = () => {
             </thead>
             <tbody>
               {displayedProjects.map(p => {
-                const statusClass = getStatusBadgeClass(p.healthStatus);
                 return (
                   <tr key={p.id}>
                     <td>
@@ -277,8 +290,12 @@ export const DashboardPage: React.FC = () => {
                       >
                         {p.name}
                       </div>
-                      <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'ui-monospace, monospace' }}>
-                        {p.erpId || 'TOTVS-PRJ'}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginTop: '0.2rem' }}>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', fontFamily: 'ui-monospace, monospace' }}>
+                          {p.erpId || 'TOTVS-PRJ'}
+                        </span>
+                        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>•</span>
+                        <TotvsSyncBadge compact lastSyncDate={p.lastSyncDate} syncStatus={p.syncStatus} erpId={p.erpId} />
                       </div>
                     </td>
                     <td>{p.clientName || 'N/A'}</td>
@@ -307,7 +324,11 @@ export const DashboardPage: React.FC = () => {
                       </div>
                     </td>
                     <td style={{ textAlign: 'center' }}>
-                      <span className={`badge ${statusClass}`}>{p.healthStatus}</span>
+                      <HealthBadge 
+                        status={p.healthStatus} 
+                        reasons={p.healthReasons} 
+                        align="center" 
+                      />
                     </td>
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'flex', gap: '0.35rem', justifyContent: 'flex-end' }}>
