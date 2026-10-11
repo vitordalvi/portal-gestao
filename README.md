@@ -89,6 +89,7 @@ classDiagram
         +decimal GetHourBalance()
         +decimal GetPhysicalProgress()
         +string GetHealthStatus()
+        +List~string~ GetHealthReasons()
         +decimal GetRealizedCost()
         +decimal GetFinancialMargin()
     }
@@ -203,11 +204,13 @@ $$\text{Saldo de Horas} = \text{Horas Vendidas} - \sum \text{Horas Apontadas}$$
 ### 2. Percentual de Avanço Físico
 $$\text{Avanço Físico (\%)} = \sum_{\text{milestone.IsCompleted = true}} \text{milestone.Weight}$$
 
-### 3. Indicador de Saúde do Projeto
-A relação entre a taxa de consumo de horas e o avanço físico define a saúde do projeto:
+### 3. Indicador e Diagnóstico de Saúde do Projeto
+A relação entre a taxa de consumo de horas e o avanço físico define a saúde do projeto, acompanhada pelo método `GetHealthReasons()` que gera diagnósticos acionáveis:
 - **🟢 Saudável:** $\text{Taxa de Consumo} \le \text{Avanço Físico}$.
 - **🟡 Atenção:** $\text{Taxa de Consumo} > \text{Avanço Físico}$ em até 15%, ou consumo de horas $\ge 80\%$.
 - **🔴 Crítico:** Consumo superou o avanço em mais de 15%, horas vendidas estouradas ($> 100\%$) ou data de término expirada com projeto incompleto.
+
+> O sistema disponibiliza no frontend tooltips nas listagens e um **Painel de Diagnóstico Operacional** na página de detalhes, discriminando com exatidão os motivos e orientando a equipe sobre descompassos, esgotamento de saldo e prazos contratuais.
 
 ### 4. Saúde Financeira (Margem de Lucro)
 $$\text{Custo Realizado} = \sum (\text{TimeEntry.Hours} \times \text{Allocation.HourlyCost})$$
@@ -228,8 +231,10 @@ Para atender à governança corporativa, os dados financeiros e ações administ
 | Visualizar Margem de Lucro em R$ | ✅ Sim | ❌ Oculto / Restrito |
 | Visualizar Custo/Hora das Alocações | ✅ Sim | ❌ Oculto / Restrito |
 | Criar Novos Projetos | ✅ Sim | ❌ Não |
-| Criar Marcos / Milestones | ✅ Sim | ❌ Não |
+| Criar, Editar e Excluir Marcos (Milestones) | ✅ Sim | ❌ Não |
 | Alocar Colaboradores na Equipe | ✅ Sim | ❌ Não |
+| Gerenciar Horas e Taxa da Alocação (Editar) | ✅ Sim | ❌ Não |
+| Desalocar Analista da Equipe (Remover) | ✅ Sim | ❌ Não |
 
 ---
 
@@ -242,9 +247,13 @@ A API segue padrões RESTful rigorosos, utilizando verbos semânticos, códigos 
 | `GET` | `/api/projects` | Lista todos os projetos da carteira | `200 OK` | Retorna indicadores calculados (avanço, saúde, saldos) |
 | `GET` | `/api/projects/{id}` | Detalhes do projeto, alocações e marcos | `200 OK` | Traz árvore completa de relacionamento do projeto |
 | `POST` | `/api/projects` | Criação de novo projeto | `201 Created` | Valida horas vendidas > 0, valor > 0, datas válidas |
-| `POST` | `/api/projects/{id}/milestones` | Cadastro de marco de entrega | `201 Created` | Valida peso entre 1 e 100%, e soma total $\le 100\%$ |
+| `POST` | `/api/projects/{id}/milestones` | Cadastro de marco de entrega | `201 Created` | Valida peso entre 1 e 100% |
+| `PUT` | `/api/projects/{id}/milestones/{mId}` | Edição de nome e peso do marco | `200 OK` | Valida peso > 0, recalcula avanço físico |
+| `DELETE` | `/api/projects/{id}/milestones/{mId}` | Exclusão de marco de entrega | `204 No Content` | Remove etapa e recalcula avanço físico e saúde |
 | `PATCH` | `/api/projects/{id}/milestones/{mId}/toggle` | Alterna status de conclusão do marco | `200 OK` | Atualiza data de conclusão e recalcula avanço físico |
 | `POST` | `/api/projects/{id}/allocations` | Aloca analista na equipe do projeto | `201 Created` | Valida se analista já não está alocado, taxa horária > 0 |
+| `PUT` | `/api/projects/{id}/allocations/{aId}` | Atualiza horas previstas, taxa e vigência | `200 OK` | Valida horas > 0, taxa > 0, recalcula margem financeira |
+| `DELETE` | `/api/projects/{id}/allocations/{aId}` | Desaloca analista da equipe do projeto | `204 No Content` | Bloqueia se analista possuir apontamentos de horas vinculados |
 | `POST` | `/api/time-entries` | Apontamento de horas em uma alocação | `201 Created` | Valida horas > 0, data não futura e alocação existente |
 | `GET` | `/api/users` | Listagem de usuários (analistas/coordenadores) | `200 OK` | Utilizado para seleção de perfis e alocação de equipe |
 | `GET` | `/api/clients` | Listagem de clientes corporativos | `200 OK` | Utilizado na criação e vínculo de projetos |
@@ -275,6 +284,11 @@ Para garantir transparência técnica na avaliação, destacamos as principais d
 * **Decisão:** Adoção do Microsoft Playwright com execução multi-viewport e validação de responsividade mobile.
 * **Motivação:** Suporte nativo e veloz a auto-wait, fixtures de personas e execução em navegadores reais *headless*.
 * **Trade-off:** Adiciona uma etapa a mais no pipeline de testes em relação a testes unitários, mas assegura que 100% dos fluxos reais do usuário (desktop e mobile) funcionem sem regressão.
+
+### 5. Segurança da Documentação OpenAPI/Swagger em Produção
+* **Decisão:** A especificação OpenAPI (`/openapi/v1.json`) está condicionada estritamente ao ambiente de desenvolvimento (`if (app.Environment.IsDevelopment())`).
+* **Motivação:** Em conformidade com as diretrizes da **OWASP API Security Top 10** (*API9: Improper Inventory Management*), documentações interativas nunca devem ficar expostas publicamente em produção, pois facilitam *endpoint discovery* e engenharia reversa por atacantes.
+* **Trade-off:** Em produção, a integração de terceiros deve ser realizada via *Developer Portal* autenticado ou contratos estáticos versionados, mantendo o host produtivo blindado contra enumeração.
 
 ---
 
@@ -365,8 +379,12 @@ dotnet test
 
 ## 📖 Especificação OpenAPI 3.0
 
-Com a API em execução, acesse o documento de especificação OpenAPI 3.0 nativo em:
+Com a API em execução em ambiente local/desenvolvimento, acesse o documento de especificação OpenAPI 3.0 nativo em:
 👉 **`http://localhost:5062/openapi/v1.json`**
+
+> 🔒 **Boas Práticas de Segurança em Produção:**  
+> Em conformidade com o padrão **OWASP API Security Top 10** (*API9: Improper Inventory Management*), o endpoint de documentação OpenAPI/Swagger está condicionado estritamente à diretiva `if (app.Environment.IsDevelopment())` no [Program.cs](file:///home/vitordalvi/Desktop/repositories/case-pvt/portal-gestao-api/portal-gestao-api/Program.cs#L56-L59).  
+> Em ambiente de produção (`ASPNETCORE_ENVIRONMENT=Production`), o endpoint é desativado por padrão para mitigar riscos de *endpoint discovery*, enumeração automatizada e exposição da superfície de ataque.
 
 ### Principais Endpoints:
 - `GET /api/projects` — Lista todos os projetos com indicadores consolidados.
