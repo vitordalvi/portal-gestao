@@ -2,7 +2,7 @@ import axios from 'axios';
 import { Project, TimeEntryRequest } from '../types';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000/api'
+  baseURL: 'http://localhost:5062/api'
 });
 
 export const getProjects = async (): Promise<Project[]> => {
