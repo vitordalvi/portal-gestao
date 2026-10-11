@@ -86,7 +86,8 @@ function App() {
       <TimeEntryModal 
         isOpen={isModalOpen} 
         onClose={() => setIsModalOpen(false)} 
-        onSuccess={handleModalSuccess} 
+        onSuccess={handleModalSuccess}
+        projectId={projects.length > 0 ? projects[0].id : ''}
       />
     </>
   );

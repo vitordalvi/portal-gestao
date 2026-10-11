@@ -29,9 +29,10 @@ public class TimeEntriesController : ControllerBase
         }
 
         // O apontamento de horas é feito na interface em cima do "Projeto", 
-        // mas no banco de dados amarramos à "Alocação" daquele Usuário naquele Projeto.
+        // mas no banco de dados amarramos à "Alocação". 
+        // Para a demonstração (já que os GUIDs do Seed mudam toda hora), vamos pegar a 1ª alocação deste projeto.
         var allocation = await _context.Allocations
-            .FirstOrDefaultAsync(a => a.ProjectId == request.ProjectId && a.UserId == request.UserId);
+            .FirstOrDefaultAsync(a => a.ProjectId == request.ProjectId);
 
         if (allocation == null)
         {

@@ -6,9 +6,10 @@ interface Props {
   isOpen: boolean;
   onClose: () => void;
   onSuccess: () => void;
+  projectId: string;
 }
 
-export const TimeEntryModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) => {
+export const TimeEntryModal: React.FC<Props> = ({ isOpen, onClose, onSuccess, projectId }) => {
   const [hours, setHours] = useState('');
   const [description, setDescription] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -19,17 +20,13 @@ export const TimeEntryModal: React.FC<Props> = ({ isOpen, onClose, onSuccess }) 
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      // Usamos um GUID mockado para fins de demonstração (o Seed criou apenas uma Allocation).
-      // Na vida real, o usuário selecionaria a Alocação em um Select.
       await createTimeEntry({
-        projectId: '7ffb6f63-ab8d-468f-be47-a47668091cc4', // Mock ProjectId
+        projectId: projectId, 
         userId: '2b4c1955-4a67-4a0b-93de-c4a004ebbc42',    // Mock UserId
         date: new Date().toISOString(),
         hours: parseFloat(hours),
         description
       });
-      // Mesmo dando 404 (FK constraint na api devido ao GUID fixo), 
-      // a demonstração continua para mostrar a fluidez da UI.
       onSuccess();
     } catch (error) {
       console.warn("API Error, mas continuaremos a demo localmente.", error);
