@@ -73,6 +73,7 @@ export const ConfirmDeleteMilestoneModal: React.FC<Props> = ({
           <button 
             type="button" 
             className="btn btn-secondary" 
+            style={{ padding: '0.55rem 1.25rem' }}
             onClick={onClose}
             disabled={isDeleting}
           >
@@ -82,15 +83,22 @@ export const ConfirmDeleteMilestoneModal: React.FC<Props> = ({
             type="button" 
             className="btn"
             style={{
+              padding: '0.55rem 1.25rem',
               background: 'var(--danger)',
               color: '#ffffff',
               border: 'none',
-              fontWeight: 600
+              fontWeight: 600,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.45rem',
+              transition: 'var(--transition)'
             }}
             onClick={onConfirm}
             disabled={isDeleting}
           >
-            {isDeleting ? 'Excluindo...' : 'Sim, Excluir Marco'}
+            <Trash2 size={15} />
+            <span>{isDeleting ? 'Excluindo...' : 'Sim, Excluir Marco'}</span>
           </button>
         </div>
       </div>

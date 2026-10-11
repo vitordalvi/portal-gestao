@@ -107,6 +107,7 @@ export const ConfirmDeallocateModal: React.FC<Props> = ({
           <button 
             type="button" 
             className="btn btn-secondary" 
+            style={{ padding: '0.55rem 1.25rem' }}
             onClick={onClose}
             disabled={isDeallocating}
           >
@@ -116,18 +117,25 @@ export const ConfirmDeallocateModal: React.FC<Props> = ({
             type="button" 
             className="btn"
             style={{
+              padding: '0.55rem 1.25rem',
               background: 'var(--danger)',
               color: '#ffffff',
               border: 'none',
               fontWeight: 600,
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: '0.45rem',
               opacity: hasLoggedHours ? 0.6 : 1,
-              cursor: hasLoggedHours ? 'not-allowed' : 'pointer'
+              cursor: hasLoggedHours ? 'not-allowed' : 'pointer',
+              transition: 'var(--transition)'
             }}
             onClick={onConfirm}
             disabled={isDeallocating || hasLoggedHours}
             title={hasLoggedHours ? 'Não é possível remover alocação com horas já apontadas' : ''}
           >
-            {isDeallocating ? 'Removendo...' : 'Sim, Desalocar Analista'}
+            <UserMinus size={15} />
+            <span>{isDeallocating ? 'Removendo...' : 'Sim, Desalocar Analista'}</span>
           </button>
         </div>
       </div>
