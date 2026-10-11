@@ -48,6 +48,26 @@ public class ProjectRepository : IProjectRepository
         await _context.SaveChangesAsync();
     }
 
+    public async Task<Allocation?> GetAllocationByIdAsync(Guid allocationId)
+    {
+        return await _context.Allocations
+            .Include(a => a.TimeEntries)
+            .Include(a => a.User)
+            .FirstOrDefaultAsync(a => a.Id == allocationId);
+    }
+
+    public async Task UpdateAllocationAsync(Allocation allocation)
+    {
+        _context.Allocations.Update(allocation);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteAllocationAsync(Allocation allocation)
+    {
+        _context.Allocations.Remove(allocation);
+        await _context.SaveChangesAsync();
+    }
+
     public async Task AddMilestoneAsync(Milestone milestone)
     {
         await _context.Milestones.AddAsync(milestone);
@@ -62,6 +82,12 @@ public class ProjectRepository : IProjectRepository
     public async Task UpdateMilestoneAsync(Milestone milestone)
     {
         _context.Milestones.Update(milestone);
+        await _context.SaveChangesAsync();
+    }
+
+    public async Task DeleteMilestoneAsync(Milestone milestone)
+    {
+        _context.Milestones.Remove(milestone);
         await _context.SaveChangesAsync();
     }
 }

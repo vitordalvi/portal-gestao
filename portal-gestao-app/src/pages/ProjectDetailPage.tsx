@@ -7,15 +7,22 @@ import {
   Clock, 
   CheckCircle2, 
   Circle,
-  Plus
+  Plus,
+  Pencil,
+  Trash2
 } from 'lucide-react';
-import { ProjectDetail } from '../types';
-import { getProjectById, toggleMilestone } from '../services/api';
+import { HealthBadge } from '../components/HealthBadge';
+import { ProjectDetail, Milestone, AllocationDetail } from '../types';
+import { getProjectById, toggleMilestone, deleteMilestone, deleteAllocation } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { AllocateModal } from '../components/AllocateModal';
+import { EditAllocationModal } from '../components/EditAllocationModal';
+import { ConfirmDeallocateModal } from '../components/ConfirmDeallocateModal';
 import { TimeEntryModal } from '../components/TimeEntryModal';
 import { CreateMilestoneModal } from '../components/CreateMilestoneModal';
-import { formatPercent, getStatusBadgeClass } from '../utils/format';
+import { EditMilestoneModal } from '../components/EditMilestoneModal';
+import { ConfirmDeleteMilestoneModal } from '../components/ConfirmDeleteMilestoneModal';
+import { formatPercent } from '../utils/format';
 
 export const ProjectDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -29,7 +36,15 @@ export const ProjectDetailPage: React.FC = () => {
   const [isAllocateModalOpen, setIsAllocateModalOpen] = useState(false);
   const [isTimeModalOpen, setIsTimeModalOpen] = useState(false);
   const [isMilestoneModalOpen, setIsMilestoneModalOpen] = useState(false);
+  const [editingMilestone, setEditingMilestone] = useState<Milestone | null>(null);
+  const [deletingMilestone, setDeletingMilestone] = useState<Milestone | null>(null);
+  const [isDeletingMilestoneAction, setIsDeletingMilestoneAction] = useState(false);
   const [isTogglingMilestone, setIsTogglingMilestone] = useState<string | null>(null);
+
+  const [editingAllocation, setEditingAllocation] = useState<AllocationDetail | null>(null);
+  const [deallocatingAllocation, setDeallocatingAllocation] = useState<AllocationDetail | null>(null);
+  const [isDeallocatingAction, setIsDeallocatingAction] = useState(false);
+  const [deallocateError, setDeallocateError] = useState<string | null>(null);
 
   const fetchProject = async () => {
     if (!id) return;
@@ -45,6 +60,10 @@ export const ProjectDetailPage: React.FC = () => {
     }
   };
 
+  /**
+   * Alterna a conclusão de um marco (concluído <-> pendente) e recarrega os dados do projeto
+   * para refletir o novo percentual de avanço físico e saúde calculada.
+   */
   const handleToggleMilestone = async (milestoneId: string) => {
     if (!project || isTogglingMilestone) return;
     setIsTogglingMilestone(milestoneId);
@@ -55,6 +74,46 @@ export const ProjectDetailPage: React.FC = () => {
       console.error('Erro ao alternar marco:', err);
     } finally {
       setIsTogglingMilestone(null);
+    }
+  };
+
+  /**
+   * Confirma e executa a exclusão definitiva de um marco de entrega.
+   * Recalcula o avanço físico ponderado dos marcos restantes.
+   */
+  const handleConfirmDeleteMilestone = async () => {
+    if (!project || !deletingMilestone || isDeletingMilestoneAction) return;
+    setIsDeletingMilestoneAction(true);
+    try {
+      await deleteMilestone(project.id, deletingMilestone.id);
+      setDeletingMilestone(null);
+      await fetchProject();
+    } catch (err) {
+      console.error('Erro ao excluir marco:', err);
+    } finally {
+      setIsDeletingMilestoneAction(false);
+    }
+  };
+
+  /**
+   * Confirma e executa a remoção de alocação de analista da equipe do projeto.
+   * Se o analista já possuir apontamentos de horas, a API bloqueia a exclusão
+   * e a mensagem de erro é exibida no banner do modal.
+   */
+  const handleConfirmDeallocate = async () => {
+    if (!project || !deallocatingAllocation || isDeallocatingAction) return;
+    setIsDeallocatingAction(true);
+    setDeallocateError(null);
+    try {
+      await deleteAllocation(project.id, deallocatingAllocation.id);
+      setDeallocatingAllocation(null);
+      await fetchProject();
+    } catch (err: any) {
+      console.error('Erro ao desalocar analista:', err);
+      const message = err.response?.data?.message || err.message || 'Erro ao remover a alocação do analista.';
+      setDeallocateError(message);
+    } finally {
+      setIsDeallocatingAction(false);
     }
   };
 
@@ -83,7 +142,6 @@ export const ProjectDetailPage: React.FC = () => {
     );
   }
 
-  const statusClass = getStatusBadgeClass(project.healthStatus);
   const formatCurrency = (val: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(val);
 
   return (
@@ -121,7 +179,12 @@ export const ProjectDetailPage: React.FC = () => {
               <h1 style={{ fontSize: '1.85rem', fontWeight: 800, color: '#ffffff' }}>
                 {project.name}
               </h1>
-              <span className={`badge ${statusClass}`}>{project.healthStatus}</span>
+              <HealthBadge 
+                status={project.healthStatus} 
+                reasons={project.healthReasons} 
+                align="left" 
+                placement="bottom" 
+              />
               <span className="badge" style={{ background: 'rgba(255,255,255,0.06)', color: 'var(--text-secondary)' }}>
                 ERP: {project.erpId || 'TOTVS'}
               </span>
@@ -245,17 +308,50 @@ export const ProjectDetailPage: React.FC = () => {
                         {alloc.user?.name || 'Analista'}
                       </div>
                       <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                        {alloc.user?.email || 'N/A'}{!isAnalyst ? ` • Custo: R$ ${alloc.hourlyCost}/h` : ''}
+                        {alloc.user?.email || 'N/A'}{!isAnalyst ? ` • R$ ${alloc.hourlyCost}/h` : ''}
                       </div>
                     </div>
 
-                    <div style={{ textAlign: 'right' }}>
-                      <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
-                        {alloc.consumedHours}h <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>/ {alloc.allocatedHours}h</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 700, color: 'var(--text-primary)' }}>
+                          {alloc.consumedHours}h <span style={{ color: 'var(--text-muted)', fontSize: '0.78rem' }}>/ {alloc.allocatedHours}h</span>
+                        </div>
+                        <div style={{ fontSize: '0.75rem', color: userPct > 100 ? 'var(--danger)' : 'var(--text-muted)' }}>
+                          {userPct}% consumido
+                        </div>
                       </div>
-                      <div style={{ fontSize: '0.75rem', color: userPct > 100 ? 'var(--danger)' : 'var(--text-muted)' }}>
-                        {userPct}% consumido
-                      </div>
+
+                      {!isAnalyst && (
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ padding: '0.3rem 0.45rem', fontSize: '0.75rem', borderColor: 'var(--card-border-subtle)' }}
+                            title="Editar horas e custo da alocação"
+                            onClick={() => setEditingAllocation(alloc)}
+                          >
+                            <Pencil size={13} />
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ 
+                              padding: '0.3rem 0.45rem', 
+                              fontSize: '0.75rem', 
+                              color: 'var(--danger)',
+                              borderColor: 'rgba(239, 68, 68, 0.25)'
+                            }}
+                            title="Desalocar analista do projeto"
+                            onClick={() => {
+                              setDeallocateError(null);
+                              setDeallocatingAllocation(alloc);
+                            }}
+                          >
+                            <Trash2 size={13} />
+                          </button>
+                        </div>
+                      )}
                     </div>
                   </div>
 
@@ -348,9 +444,45 @@ export const ProjectDetailPage: React.FC = () => {
                   </div>
                 </div>
 
-                <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                  <span>Peso:</span>
-                  <strong style={{ color: m.isCompleted ? 'var(--success)' : 'var(--accent-light)' }}>{m.weight}%</strong>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <span>Peso:</span>
+                    <strong style={{ color: m.isCompleted ? 'var(--success)' : 'var(--accent-light)' }}>{m.weight}%</strong>
+                  </div>
+
+                  {!isAnalyst && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        style={{ padding: '0.3rem 0.45rem', fontSize: '0.75rem', borderColor: 'var(--card-border-subtle)' }}
+                        title="Editar este marco"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingMilestone(m);
+                        }}
+                      >
+                        <Pencil size={13} />
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        style={{ 
+                          padding: '0.3rem 0.45rem', 
+                          fontSize: '0.75rem', 
+                          color: 'var(--danger)',
+                          borderColor: 'rgba(239, 68, 68, 0.25)'
+                        }}
+                        title="Excluir este marco"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setDeletingMilestone(m);
+                        }}
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -377,6 +509,26 @@ export const ProjectDetailPage: React.FC = () => {
         projectName={project.name}
         currentTotalWeight={project.milestones.reduce((acc, m) => acc + m.weight, 0)}
       />
+      <EditMilestoneModal 
+        isOpen={!!editingMilestone}
+        onClose={() => setEditingMilestone(null)}
+        onSuccess={() => {
+          setEditingMilestone(null);
+          fetchProject();
+        }}
+        projectId={project.id}
+        projectName={project.name}
+        milestone={editingMilestone}
+        currentTotalWeight={project.milestones.reduce((acc, m) => acc + m.weight, 0)}
+      />
+      <ConfirmDeleteMilestoneModal 
+        isOpen={!!deletingMilestone}
+        onClose={() => setDeletingMilestone(null)}
+        onConfirm={handleConfirmDeleteMilestone}
+        milestoneName={deletingMilestone?.name || ''}
+        milestoneWeight={deletingMilestone?.weight || 0}
+        isDeleting={isDeletingMilestoneAction}
+      />
       <AllocateModal 
         isOpen={isAllocateModalOpen}
         onClose={() => setIsAllocateModalOpen(false)}
@@ -386,6 +538,32 @@ export const ProjectDetailPage: React.FC = () => {
         }}
         projectId={project.id}
         projectName={project.name}
+      />
+
+      <EditAllocationModal 
+        isOpen={!!editingAllocation}
+        onClose={() => setEditingAllocation(null)}
+        onSuccess={() => {
+          setEditingAllocation(null);
+          fetchProject();
+        }}
+        projectId={project.id}
+        projectName={project.name}
+        allocation={editingAllocation}
+      />
+
+      <ConfirmDeallocateModal 
+        isOpen={!!deallocatingAllocation}
+        onClose={() => {
+          setDeallocatingAllocation(null);
+          setDeallocateError(null);
+        }}
+        onConfirm={handleConfirmDeallocate}
+        analystName={deallocatingAllocation?.user?.name || 'Analista'}
+        allocatedHours={deallocatingAllocation?.allocatedHours || 0}
+        consumedHours={deallocatingAllocation?.consumedHours || 0}
+        isDeallocating={isDeallocatingAction}
+        errorMessage={deallocateError}
       />
 
       <TimeEntryModal 

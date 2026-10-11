@@ -27,6 +27,7 @@ public class ProjectService : IProjectService
             HourBalance = p.GetHourBalance(),
             PhysicalProgressPercentage = p.GetPhysicalProgress(),
             HealthStatus = p.GetHealthStatus(),
+            HealthReasons = p.GetHealthReasons(),
             FinancialMargin = p.GetFinancialMargin(),
             AllocatedUserIds = p.Allocations.Select(a => a.UserId).ToList()
         });
@@ -52,6 +53,7 @@ public class ProjectService : IProjectService
             HourBalance = p.GetHourBalance(),
             PhysicalProgressPercentage = p.GetPhysicalProgress(),
             HealthStatus = p.GetHealthStatus(),
+            HealthReasons = p.GetHealthReasons(),
             FinancialMargin = p.GetFinancialMargin(),
             RealizedCost = p.GetRealizedCost(),
             Client = p.Client == null ? null : new { p.Client.Id, p.Client.Name, p.Client.Cnpj, p.Client.Segment },
@@ -108,6 +110,50 @@ public class ProjectService : IProjectService
         return allocation;
     }
 
+    /// <summary>
+    /// Atualiza as horas alocadas, valor da hora e período de vigência de uma alocação.
+    /// Como o cálculo de margem e custo realizado é dinâmico (Rich Domain Model),
+    /// a atualização do HourlyCost reflete instantaneamente em GetFinancialMargin() e GetRealizedCost().
+    /// </summary>
+    public async Task<object?> UpdateAllocationAsync(Guid projectId, Guid allocationId, UpdateAllocationDto request)
+    {
+        var allocation = await _projectRepository.GetAllocationByIdAsync(allocationId);
+        if (allocation == null || allocation.ProjectId != projectId)
+            return null;
+
+        allocation.AllocatedHours = request.AllocatedHours;
+        allocation.HourlyCost = request.HourlyCost;
+        if (request.StartDate.HasValue) allocation.StartDate = request.StartDate.Value;
+        if (request.EndDate.HasValue) allocation.EndDate = request.EndDate.Value;
+
+        await _projectRepository.UpdateAllocationAsync(allocation);
+        return allocation;
+    }
+
+    /// <summary>
+    /// Desaloca um analista do projeto.
+    /// Regra de Integridade: Se o analista já possuir apontamentos de horas vinculados,
+    /// a remoção é bloqueada para não corromper o histórico de custos realizados e auditoria contábil.
+    /// </summary>
+    public async Task<(bool Success, string? ErrorMessage)> DeleteAllocationAsync(Guid projectId, Guid allocationId)
+    {
+        var allocation = await _projectRepository.GetAllocationByIdAsync(allocationId);
+        if (allocation == null || allocation.ProjectId != projectId)
+            return (false, "Alocação ou projeto não encontrado.");
+
+        // Bloqueio preventivo de exclusão para alocações com apontamentos ativos
+        if (allocation.TimeEntries.Any())
+        {
+            return (false, $"Não é possível remover a alocação de {allocation.User?.Name ?? "analista"} pois já existem {allocation.TimeEntries.Sum(t => t.Hours)}h de apontamentos registradas.");
+        }
+
+        await _projectRepository.DeleteAllocationAsync(allocation);
+        return (true, null);
+    }
+
+    /// <summary>
+    /// Adiciona um novo marco de entrega com peso percentual ponderado.
+    /// </summary>
     public async Task<object> AddMilestoneAsync(Guid projectId, CreateMilestoneDto request)
     {
         var milestone = new Milestone
@@ -120,10 +166,41 @@ public class ProjectService : IProjectService
         };
 
         await _projectRepository.AddMilestoneAsync(milestone);
+        return milestone;
+    }
+
+    /// <summary>
+    /// Atualiza o nome e o peso de um marco. O avanço físico do projeto é recalculado automaticamente.
+    /// </summary>
+    public async Task<object?> UpdateMilestoneAsync(Guid projectId, Guid milestoneId, UpdateMilestoneDto request)
+    {
+        var milestone = await _projectRepository.GetMilestoneByIdAsync(milestoneId);
+        if (milestone == null || milestone.ProjectId != projectId)
+            return null;
+
+        milestone.Name = request.Name;
+        milestone.Weight = request.Weight;
+        await _projectRepository.UpdateMilestoneAsync(milestone);
 
         return milestone;
     }
 
+    /// <summary>
+    /// Remove um marco de entrega. A exclusão recalcula imediatamente o percentual de avanço físico ponderado.
+    /// </summary>
+    public async Task<bool> DeleteMilestoneAsync(Guid projectId, Guid milestoneId)
+    {
+        var milestone = await _projectRepository.GetMilestoneByIdAsync(milestoneId);
+        if (milestone == null || milestone.ProjectId != projectId)
+            return false;
+
+        await _projectRepository.DeleteMilestoneAsync(milestone);
+        return true;
+    }
+
+    /// <summary>
+    /// Alterna a situação do marco entre concluído e pendente, atualizando o progresso e a saúde do projeto.
+    /// </summary>
     public async Task<object?> ToggleMilestoneAsync(Guid projectId, Guid milestoneId)
     {
         var milestone = await _projectRepository.GetMilestoneByIdAsync(milestoneId);
